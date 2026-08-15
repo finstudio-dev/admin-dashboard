@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { formatMoney, formatDate, categoryLabels } from "@/lib/format";
 import AddOrgEntryForm from "@/components/AddOrgEntryForm";
+import DeleteOrgEntryButton from "@/components/DeleteOrgEntryButton";
 import type { OrgBalanceEntry } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -37,6 +38,7 @@ export default async function OrgBalancePage() {
               <th className="px-4 py-3">Description</th>
               <th className="px-4 py-3">Added by</th>
               <th className="px-4 py-3 text-right">Amount</th>
+              <th className="px-4 py-3 text-right">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-neutral-100">
@@ -53,11 +55,14 @@ export default async function OrgBalancePage() {
                 >
                   {formatMoney(e.amount)}
                 </td>
+                <td className="px-4 py-3">
+                  <DeleteOrgEntryButton entryId={e.id} />
+                </td>
               </tr>
             ))}
             {(!entries || entries.length === 0) && (
               <tr>
-                <td colSpan={5} className="px-4 py-6 text-center text-neutral-400">
+                <td colSpan={6} className="px-4 py-6 text-center text-neutral-400">
                   No entries yet.
                 </td>
               </tr>

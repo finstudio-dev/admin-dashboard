@@ -235,6 +235,40 @@ export async function addOrgBalanceEntry(input: {
   revalidatePath("/");
 }
 
+// Permanently removes an organization balance entry — e.g. a demo/test
+// entry added while trying the dashboard out. Unlike a member's deposit
+// history, this is a straight delete with no separate "reverse it" pattern,
+// since org balance entries are already meant to be typed in and corrected
+// directly by an admin. The row (and its effect on the org balance total)
+// is gone immediately; there's no undo, so the confirmation happens in the
+// UI before this is ever called.
+export async function deleteOrgBalanceEntry(entryId: string) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("Not signed in");
+
+  const { data: target } = await supabase
+    .from("org_balance_entries")
+    .select("amount, category, description")
+    .eq("id", entryId)
+    .single();
+
+  const { error } = await supabase.from("org_balance_entries").delete().eq("id", entryId);
+  if (error) throw new Error(error.message);
+
+  await supabase.rpc("log_audit", {
+    p_action: "delete_org_balance_entry",
+    p_entity_type: "org_balance_entry",
+    p_entity_id: entryId,
+    p_details: target ?? null,
+  });
+
+  revalidatePath("/org-balance");
+  revalidatePath("/");
+}
+
 export async function setMemberStatus(memberId: string, status: "active" | "suspended") {
   const supabase = await createClient();
   const { error } = await supabase.from("profiles").update({ status }).eq("id", memberId);
