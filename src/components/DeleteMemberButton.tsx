@@ -65,7 +65,7 @@ export default function DeleteMemberButton({
         value={confirmText}
         onChange={(e) => setConfirmText(e.target.value)}
         placeholder={fullName}
-        className="mt-3 w-full rounded-md border border-red-300 px-2 py-1.5 text-sm"
+        className="mt-3 w-full rounded-md border border-red-300 bg-white px-2 py-1.5 text-sm text-neutral-900"
       />
       {error && <p className="mt-2 text-xs text-red-700">{error}</p>}
       <div className="mt-3 flex gap-2">

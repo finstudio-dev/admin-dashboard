@@ -74,7 +74,7 @@ export default function SettingsForm({
           type="text"
           value={orgName}
           onChange={(e) => setOrgName(e.target.value)}
-          className="w-full rounded-md border border-neutral-300 px-2.5 py-2 text-sm focus:border-neutral-500 focus:outline-none"
+          className="w-full rounded-md border border-neutral-300 bg-white px-2.5 py-2 text-sm text-neutral-900 focus:border-neutral-500 focus:outline-none"
           placeholder="e.g. Ababil Savings Fund"
         />
         <p className="mt-1 text-xs text-neutral-400">

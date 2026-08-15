@@ -71,7 +71,7 @@ export default function ReviewActions({
           placeholder="e.g. reason for rejection"
           value={note}
           onChange={(e) => setNote(e.target.value)}
-          className="w-full rounded-md border border-neutral-300 px-2 py-1.5 text-xs focus:border-neutral-500 focus:outline-none"
+          className="w-full rounded-md border border-neutral-300 bg-white px-2 py-1.5 text-xs text-neutral-900 focus:border-neutral-500 focus:outline-none"
         />
       </div>
       <div className="flex gap-2">

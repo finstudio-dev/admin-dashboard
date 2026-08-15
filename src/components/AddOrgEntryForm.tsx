@@ -6,7 +6,7 @@ import type { OrgCategory } from "@/lib/types";
 
 const fieldLabel = "block text-xs font-medium text-neutral-500 mb-1";
 const fieldInput =
-  "w-full rounded-md border border-neutral-300 px-2.5 py-2 text-sm focus:border-neutral-500 focus:outline-none";
+  "w-full rounded-md border border-neutral-300 bg-white px-2.5 py-2 text-sm text-neutral-900 focus:border-neutral-500 focus:outline-none";
 
 export default function AddOrgEntryForm() {
   const [amount, setAmount] = useState("");
