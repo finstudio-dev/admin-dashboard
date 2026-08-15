@@ -57,8 +57,13 @@ export default async function OverviewPage() {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <StatCard label="Total Fund (approved deposits)" value={formatMoney(fundTotal?.balance ?? 0)} />
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <StatCard
+          label="Total Balance"
+          value={formatMoney((fundTotal?.balance ?? 0) + (orgBalance?.balance ?? 0))}
+          sub="Member fund + organization balance"
+        />
+        <StatCard label="Member Fund (approved deposits)" value={formatMoney(fundTotal?.balance ?? 0)} />
         <StatCard label="Organization Balance" value={formatMoney(orgBalance?.balance ?? 0)} sub="Late fees, membership fees, upgrades" />
         <StatCard
           label="Pending Deposits"

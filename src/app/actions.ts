@@ -130,6 +130,72 @@ export async function addMemberBalanceEntry(input: {
   revalidatePath("/");
 }
 
+// Same idea as addMemberBalanceEntry, but applies the identical entry to
+// every currently-active member at once — e.g. collecting the same monthly
+// dues from everyone, or giving the whole group the same bonus. Only
+// touches members with status='active' (pending/suspended/rejected accounts
+// are skipped, since they shouldn't be accruing balance changes). Returns
+// how many members were affected so the UI can confirm it to the admin.
+export async function addBulkMemberBalanceEntry(input: {
+  entryType: EntryType;
+  amount: number;
+  direction?: "add" | "subtract";
+  method: DepositMethod;
+  note?: string;
+  periodMonth?: string;
+}) {
+  const supabase = await createClient();
+
+  const magnitude = Math.abs(input.amount);
+  if (!magnitude) throw new Error("Enter a non-zero amount.");
+
+  let signedAmount = magnitude;
+  if (input.entryType === "withdrawal") {
+    signedAmount = -magnitude;
+  } else if (input.entryType === "adjustment") {
+    signedAmount = input.direction === "subtract" ? -magnitude : magnitude;
+  }
+
+  const { data: activeMembers, error: fetchError } = await supabase
+    .from("profiles")
+    .select("id")
+    .eq("status", "active");
+  if (fetchError) throw new Error(fetchError.message);
+  if (!activeMembers || activeMembers.length === 0) {
+    throw new Error("No active members to apply this to.");
+  }
+
+  const periodMonth = input.periodMonth || new Date().toISOString().slice(0, 10);
+  const reviewedAt = new Date().toISOString();
+
+  const { error } = await supabase.from("deposits").insert(
+    activeMembers.map((m) => ({
+      member_id: m.id,
+      amount: signedAmount,
+      method: input.method,
+      note: input.note || null,
+      status: "approved",
+      source: "admin",
+      entry_type: input.entryType,
+      period_month: periodMonth,
+      reviewed_at: reviewedAt,
+    }))
+  );
+  if (error) throw new Error(error.message);
+
+  await supabase.rpc("log_audit", {
+    p_action: `bulk_add_balance_entry_${input.entryType}`,
+    p_entity_type: "deposit",
+    p_entity_id: null,
+    p_details: { amount: signedAmount, entry_type: input.entryType, member_count: activeMembers.length },
+  });
+
+  revalidatePath("/members");
+  revalidatePath("/");
+
+  return { memberCount: activeMembers.length };
+}
+
 export async function addOrgBalanceEntry(input: {
   amount: number;
   category: OrgCategory;
