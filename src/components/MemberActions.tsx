@@ -27,15 +27,9 @@ export default function MemberActions({
 
   return (
     <div className="flex flex-wrap gap-2">
-      {status === "pending" && (
-        <button
-          onClick={() => startTransition(() => setMemberStatus(memberId, "active"))}
-          disabled={pending}
-          className="rounded-md bg-emerald-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-emerald-700 disabled:opacity-50"
-        >
-          Activate member
-        </button>
-      )}
+      {/* Activating/rejecting a pending member happens in the Identity
+          verification panel above (see VerificationReview), so this
+          component only handles suspend/reactivate + admin toggle. */}
       {status !== "pending" && (
         <button
           onClick={toggleStatus}

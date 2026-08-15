@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import type { DepositMethod, OrgCategory } from "@/lib/types";
+import type { DepositMethod, EntryType, OrgCategory } from "@/lib/types";
 
 // Every action re-checks admin role server-side via RLS: the Supabase
 // client here carries the signed-in admin's session, and every table's
@@ -71,24 +71,46 @@ export async function rejectDeposit(depositId: string, adminNote?: string) {
   revalidatePath("/members");
 }
 
-export async function addManualDeposit(input: {
+// Lets an admin directly adjust a member's balance: add a deposit on their
+// behalf (e.g. cash handed over in person), record a withdrawal (money paid
+// out to them), give a bonus (extra credit that isn't a real deposit), or
+// make a manual correction in either direction. `amount` is always the
+// magnitude the admin typed (never negative) — the sign that actually gets
+// stored is derived here from entryType (and `direction` for adjustments
+// only), so the UI never has to ask a non-technical admin to type a minus
+// sign. Every entry an admin adds this way is recorded as already approved.
+export async function addMemberBalanceEntry(input: {
   memberId: string;
+  entryType: EntryType;
   amount: number;
+  direction?: "add" | "subtract";
   method: DepositMethod;
   note?: string;
   periodMonth?: string;
 }) {
   const supabase = await createClient();
 
+  const magnitude = Math.abs(input.amount);
+  if (!magnitude) throw new Error("Enter a non-zero amount.");
+
+  let signedAmount = magnitude;
+  if (input.entryType === "withdrawal") {
+    signedAmount = -magnitude;
+  } else if (input.entryType === "adjustment") {
+    signedAmount = input.direction === "subtract" ? -magnitude : magnitude;
+  }
+  // deposit and bonus always stay positive
+
   const { data, error } = await supabase
     .from("deposits")
     .insert({
       member_id: input.memberId,
-      amount: input.amount,
+      amount: signedAmount,
       method: input.method,
       note: input.note || null,
       status: "approved",
       source: "admin",
+      entry_type: input.entryType,
       period_month: input.periodMonth || new Date().toISOString().slice(0, 10),
       reviewed_at: new Date().toISOString(),
     })
@@ -98,10 +120,10 @@ export async function addManualDeposit(input: {
   if (error) throw new Error(error.message);
 
   await supabase.rpc("log_audit", {
-    p_action: "add_manual_deposit",
+    p_action: `add_member_balance_entry_${input.entryType}`,
     p_entity_type: "deposit",
     p_entity_id: data.id,
-    p_details: { amount: input.amount, member_id: input.memberId },
+    p_details: { amount: signedAmount, member_id: input.memberId, entry_type: input.entryType },
   });
 
   revalidatePath(`/members/${input.memberId}`);
@@ -173,6 +195,88 @@ export async function setMemberRole(memberId: string, role: "member" | "admin") 
 
   revalidatePath("/members");
   revalidatePath(`/members/${memberId}`);
+}
+
+// Approves a member's submitted identity verification (or, if they haven't
+// submitted one yet, lets an admin activate them anyway at their own
+// discretion). Sets status to 'active' and records who reviewed it and when.
+export async function approveMemberVerification(memberId: string, note?: string) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("Not signed in");
+
+  const { error } = await supabase
+    .from("profiles")
+    .update({
+      status: "active",
+      reviewed_by: user.id,
+      reviewed_at: new Date().toISOString(),
+      review_note: note || null,
+    })
+    .eq("id", memberId);
+  if (error) throw new Error(error.message);
+
+  await supabase.rpc("log_audit", {
+    p_action: "approve_member_verification",
+    p_entity_type: "profile",
+    p_entity_id: memberId,
+    p_details: null,
+  });
+
+  revalidatePath("/members");
+  revalidatePath(`/members/${memberId}`);
+  revalidatePath("/verifications");
+  revalidatePath("/");
+}
+
+// Rejects a member's submitted identity verification. They stay in the
+// system with status 'rejected' (nothing is deleted) and can resubmit their
+// verification info themselves from the app, which returns them to
+// 'pending' for another review — see enforce_profile_self_update_limits()
+// in schema.sql for exactly what that resubmission is allowed to change.
+export async function rejectMemberVerification(memberId: string, note: string) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("Not signed in");
+
+  if (!note.trim()) {
+    throw new Error("Please explain why you're rejecting this, the member will see this note.");
+  }
+
+  const { error } = await supabase
+    .from("profiles")
+    .update({
+      status: "rejected",
+      reviewed_by: user.id,
+      reviewed_at: new Date().toISOString(),
+      review_note: note.trim(),
+    })
+    .eq("id", memberId);
+  if (error) throw new Error(error.message);
+
+  await supabase.rpc("log_audit", {
+    p_action: "reject_member_verification",
+    p_entity_type: "profile",
+    p_entity_id: memberId,
+    p_details: { reason: note.trim() },
+  });
+
+  revalidatePath("/members");
+  revalidatePath(`/members/${memberId}`);
+  revalidatePath("/verifications");
+}
+
+export async function getVerificationPhotoUrl(path: string) {
+  const supabase = await createClient();
+  const { data, error } = await supabase.storage
+    .from("verification")
+    .createSignedUrl(path, 60 * 10);
+  if (error) throw new Error(error.message);
+  return data.signedUrl;
 }
 
 // Permanently deletes a member's login AND every record tied to them

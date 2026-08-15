@@ -1,7 +1,8 @@
 export type Role = "member" | "admin";
-export type MemberStatus = "pending" | "active" | "suspended";
+export type MemberStatus = "pending" | "active" | "suspended" | "rejected";
 export type DepositMethod = "bkash" | "nagad" | "rocket" | "bank" | "cash" | "other";
 export type DepositStatus = "pending" | "approved" | "rejected";
+export type EntryType = "deposit" | "withdrawal" | "bonus" | "adjustment";
 export type OrgCategory =
   | "late_fee"
   | "membership_fee"
@@ -18,6 +19,14 @@ export interface Profile {
   role: Role;
   status: MemberStatus;
   created_at: string;
+  address: string | null;
+  nid_number: string | null;
+  photo_url: string | null;
+  nid_photo_url: string | null;
+  verification_submitted_at: string | null;
+  reviewed_by: string | null;
+  reviewed_at: string | null;
+  review_note: string | null;
 }
 
 export interface Deposit {
@@ -31,6 +40,7 @@ export interface Deposit {
   period_month: string;
   status: DepositStatus;
   source: "member" | "admin";
+  entry_type: EntryType;
   submitted_at: string;
   reviewed_by: string | null;
   reviewed_at: string | null;

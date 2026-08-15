@@ -1,9 +1,10 @@
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { formatMoney, formatDate, methodLabels } from "@/lib/format";
+import { formatMoney, formatDate, methodLabels, entryTypeLabels } from "@/lib/format";
 import StatusBadge from "@/components/StatusBadge";
 import MemberActions from "@/components/MemberActions";
-import AddManualDepositForm from "@/components/AddManualDepositForm";
+import VerificationReview from "@/components/VerificationReview";
+import AddMemberBalanceEntryForm from "@/components/AddMemberBalanceEntryForm";
 import DeleteMemberButton from "@/components/DeleteMemberButton";
 import type { Deposit, Profile } from "@/lib/types";
 
@@ -51,9 +52,11 @@ export default async function MemberDetailPage({
         </div>
       </div>
 
+      <VerificationReview member={p} />
+
       <MemberActions memberId={p.id} status={p.status} role={p.role} />
 
-      <AddManualDepositForm memberId={p.id} />
+      <AddMemberBalanceEntryForm memberId={p.id} />
 
       <div>
         <h3 className="mb-3 text-sm font-medium text-neutral-900">Transaction history</h3>
@@ -62,6 +65,7 @@ export default async function MemberDetailPage({
             <thead className="bg-neutral-50 text-xs uppercase tracking-wide text-neutral-500">
               <tr>
                 <th className="px-4 py-3">Date</th>
+                <th className="px-4 py-3">Type</th>
                 <th className="px-4 py-3">Method</th>
                 <th className="px-4 py-3">Status</th>
                 <th className="px-4 py-3">Source</th>
@@ -72,6 +76,7 @@ export default async function MemberDetailPage({
               {((deposits ?? []) as Deposit[]).map((d) => (
                 <tr key={d.id}>
                   <td className="px-4 py-3 text-neutral-600">{formatDate(d.submitted_at)}</td>
+                  <td className="px-4 py-3 text-neutral-600">{entryTypeLabels[d.entry_type] ?? d.entry_type}</td>
                   <td className="px-4 py-3 text-neutral-600">
                     {methodLabels[d.method] ?? d.method}
                     {d.transaction_ref ? ` (${d.transaction_ref})` : ""}
@@ -80,12 +85,18 @@ export default async function MemberDetailPage({
                     <StatusBadge value={d.status} />
                   </td>
                   <td className="px-4 py-3 text-neutral-500">{d.source === "admin" ? "Admin entry" : "Member"}</td>
-                  <td className="px-4 py-3 text-right font-medium text-neutral-900">{formatMoney(d.amount)}</td>
+                  <td
+                    className={`px-4 py-3 text-right font-medium ${
+                      d.amount < 0 ? "text-red-600" : "text-neutral-900"
+                    }`}
+                  >
+                    {formatMoney(d.amount)}
+                  </td>
                 </tr>
               ))}
               {(!deposits || deposits.length === 0) && (
                 <tr>
-                  <td colSpan={5} className="px-4 py-6 text-center text-neutral-400">
+                  <td colSpan={6} className="px-4 py-6 text-center text-neutral-400">
                     No transactions yet.
                   </td>
                 </tr>

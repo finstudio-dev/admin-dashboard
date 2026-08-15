@@ -28,6 +28,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const navItems = [
     { href: "/", label: "Overview" },
     { href: "/pending", label: "Pending Deposits" },
+    { href: "/verifications", label: "Pending Verifications" },
     { href: "/members", label: "Members" },
     { href: "/org-balance", label: "Organization Balance" },
     { href: "/audit-log", label: "Audit Log" },

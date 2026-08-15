@@ -29,6 +29,13 @@ export const methodLabels: Record<string, string> = {
   other: "Other",
 };
 
+export const entryTypeLabels: Record<string, string> = {
+  deposit: "Deposit",
+  withdrawal: "Withdrawal",
+  bonus: "Bonus",
+  adjustment: "Adjustment",
+};
+
 export const categoryLabels: Record<string, string> = {
   late_fee: "Late Payment Fee",
   membership_fee: "Membership Fee",

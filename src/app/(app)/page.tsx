@@ -18,13 +18,23 @@ function StatCard({ label, value, sub }: { label: string; value: string; sub?: s
 export default async function OverviewPage() {
   const supabase = await createClient();
 
-  const [{ data: fundTotal }, { data: orgBalance }, { count: pendingCount }, { data: activeMembers }] =
-    await Promise.all([
-      supabase.from("fund_total").select("balance").single(),
-      supabase.from("org_balance").select("balance").single(),
-      supabase.from("deposits").select("id", { count: "exact", head: true }).eq("status", "pending"),
-      supabase.from("profiles").select("*").eq("status", "active").eq("role", "member"),
-    ]);
+  const [
+    { data: fundTotal },
+    { data: orgBalance },
+    { count: pendingCount },
+    { count: pendingVerificationCount },
+    { data: activeMembers },
+  ] = await Promise.all([
+    supabase.from("fund_total").select("balance").single(),
+    supabase.from("org_balance").select("balance").single(),
+    supabase.from("deposits").select("id", { count: "exact", head: true }).eq("status", "pending"),
+    supabase
+      .from("profiles")
+      .select("id", { count: "exact", head: true })
+      .eq("status", "pending")
+      .not("verification_submitted_at", "is", null),
+    supabase.from("profiles").select("*").eq("status", "active").eq("role", "member"),
+  ]);
 
   const currentMonthStart = new Date();
   currentMonthStart.setDate(1);
@@ -88,6 +98,15 @@ export default async function OverviewPage() {
           className="block rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm font-medium text-amber-800 hover:bg-amber-100"
         >
           You have {pendingCount} deposit{pendingCount === 1 ? "" : "s"} waiting for review →
+        </Link>
+      ) : null}
+
+      {pendingVerificationCount ? (
+        <Link
+          href="/verifications"
+          className="block rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm font-medium text-amber-800 hover:bg-amber-100"
+        >
+          You have {pendingVerificationCount} new member{pendingVerificationCount === 1 ? "" : "s"} waiting on identity verification →
         </Link>
       ) : null}
     </div>
