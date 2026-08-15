@@ -133,9 +133,12 @@ export async function addMemberBalanceEntry(input: {
 // Same idea as addMemberBalanceEntry, but applies the identical entry to
 // every currently-active member at once — e.g. collecting the same monthly
 // dues from everyone, or giving the whole group the same bonus. Only
-// touches members with status='active' (pending/suspended/rejected accounts
-// are skipped, since they shouldn't be accruing balance changes). Returns
-// how many members were affected so the UI can confirm it to the admin.
+// touches status='active' members with role='member' — pending/suspended/
+// rejected accounts are skipped since they shouldn't be accruing balance
+// changes, and admin accounts are skipped because they exist to run the
+// club, not to hold a balance in it (an admin can still be adjusted
+// individually from their own member page if that's ever genuinely wanted).
+// Returns how many members were affected so the UI can confirm it.
 export async function addBulkMemberBalanceEntry(input: {
   entryType: EntryType;
   amount: number;
@@ -159,7 +162,8 @@ export async function addBulkMemberBalanceEntry(input: {
   const { data: activeMembers, error: fetchError } = await supabase
     .from("profiles")
     .select("id")
-    .eq("status", "active");
+    .eq("status", "active")
+    .eq("role", "member");
   if (fetchError) throw new Error(fetchError.message);
   if (!activeMembers || activeMembers.length === 0) {
     throw new Error("No active members to apply this to.");

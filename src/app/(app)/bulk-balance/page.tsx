@@ -9,7 +9,8 @@ export default async function BulkBalancePage() {
   const { count: activeMemberCount } = await supabase
     .from("profiles")
     .select("id", { count: "exact", head: true })
-    .eq("status", "active");
+    .eq("status", "active")
+    .eq("role", "member");
 
   return (
     <div className="space-y-6">
@@ -24,9 +25,10 @@ export default async function BulkBalancePage() {
       <BulkBalanceEntryForm activeMemberCount={activeMemberCount ?? 0} />
 
       <p className="text-xs text-neutral-400">
-        This only affects members with an active status — pending, suspended, or rejected accounts are
-        skipped. Each member gets their own transaction entry, visible on their individual page, so you
-        can still review or reverse it for a single person afterward if needed.
+        This only affects active members — pending, suspended, and rejected accounts are skipped, and so
+        are admin accounts (admins run the club, they don&apos;t hold a balance in it). Each member gets their
+        own transaction entry, visible on their individual page, so you can still review or reverse it for
+        a single person afterward if needed.
       </p>
     </div>
   );

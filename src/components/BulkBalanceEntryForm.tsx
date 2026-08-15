@@ -67,7 +67,8 @@ export default function BulkBalanceEntryForm({ activeMemberCount }: { activeMemb
         <h3 className="text-sm font-medium text-neutral-900">Apply to every active member</h3>
         <p className="mt-0.5 text-xs text-neutral-500">{HELP_TEXT[entryType]}</p>
         <p className="mt-1 text-xs text-neutral-400">
-          Currently {activeMemberCount} active member{activeMemberCount === 1 ? "" : "s"} would be affected.
+          Currently {activeMemberCount} active member{activeMemberCount === 1 ? "" : "s"} would be affected
+          (admin accounts are never included).
         </p>
       </div>
 
