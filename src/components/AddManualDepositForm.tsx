@@ -4,6 +4,10 @@ import { useState, useTransition } from "react";
 import { addManualDeposit } from "@/app/actions";
 import type { DepositMethod } from "@/lib/types";
 
+const fieldLabel = "block text-xs font-medium text-neutral-500 mb-1";
+const fieldInput =
+  "w-full rounded-md border border-neutral-300 px-2.5 py-2 text-sm focus:border-neutral-500 focus:outline-none";
+
 export default function AddManualDepositForm({ memberId }: { memberId: string }) {
   const [amount, setAmount] = useState("");
   const [method, setMethod] = useState<DepositMethod>("cash");
@@ -32,45 +36,65 @@ export default function AddManualDepositForm({ memberId }: { memberId: string })
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-3 rounded-xl border border-neutral-200 bg-white p-4 shadow-sm">
-      <h3 className="text-sm font-medium text-neutral-900">Add manual entry</h3>
-      <p className="text-xs text-neutral-500">
-        For cash handed over in person or corrections. This is added as already approved.
-      </p>
-      <div className="flex flex-wrap gap-2">
-        <input
-          type="number"
-          min="0"
-          step="0.01"
-          placeholder="Amount"
-          value={amount}
-          onChange={(e) => setAmount(e.target.value)}
-          className="w-32 rounded-md border border-neutral-300 px-2 py-1.5 text-sm"
-          required
-        />
-        <select
-          value={method}
-          onChange={(e) => setMethod(e.target.value as DepositMethod)}
-          className="rounded-md border border-neutral-300 px-2 py-1.5 text-sm"
-        >
-          <option value="cash">Cash</option>
-          <option value="bkash">bKash</option>
-          <option value="nagad">Nagad</option>
-          <option value="rocket">Rocket</option>
-          <option value="bank">Bank Transfer</option>
-          <option value="other">Other</option>
-        </select>
-        <input
-          type="text"
-          placeholder="Note (optional)"
-          value={note}
-          onChange={(e) => setNote(e.target.value)}
-          className="flex-1 min-w-[10rem] rounded-md border border-neutral-300 px-2 py-1.5 text-sm"
-        />
+    <form onSubmit={handleSubmit} className="space-y-4 rounded-xl border border-neutral-200 bg-white p-4 shadow-sm">
+      <div>
+        <h3 className="text-sm font-medium text-neutral-900">Add manual entry</h3>
+        <p className="mt-0.5 text-xs text-neutral-500">
+          For cash handed over in person or corrections. This is added as already approved.
+        </p>
+      </div>
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-[8rem_10rem_1fr_auto] sm:items-end">
+        <div>
+          <label className={fieldLabel} htmlFor="manual-deposit-amount">
+            Amount
+          </label>
+          <input
+            id="manual-deposit-amount"
+            type="number"
+            min="0"
+            step="0.01"
+            placeholder="0.00"
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+            className={fieldInput}
+            required
+          />
+        </div>
+        <div>
+          <label className={fieldLabel} htmlFor="manual-deposit-method">
+            Method
+          </label>
+          <select
+            id="manual-deposit-method"
+            value={method}
+            onChange={(e) => setMethod(e.target.value as DepositMethod)}
+            className={fieldInput}
+          >
+            <option value="cash">Cash</option>
+            <option value="bkash">bKash</option>
+            <option value="nagad">Nagad</option>
+            <option value="rocket">Rocket</option>
+            <option value="bank">Bank Transfer</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+        <div>
+          <label className={fieldLabel} htmlFor="manual-deposit-note">
+            Note (optional)
+          </label>
+          <input
+            id="manual-deposit-note"
+            type="text"
+            placeholder="What's this for?"
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+            className={fieldInput}
+          />
+        </div>
         <button
           type="submit"
           disabled={pending}
-          className="rounded-md bg-neutral-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-neutral-800 disabled:opacity-50"
+          className="rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-800 disabled:opacity-50"
         >
           Add
         </button>

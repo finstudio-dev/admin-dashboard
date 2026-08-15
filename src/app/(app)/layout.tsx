@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import SignOutButton from "@/components/SignOutButton";
+import type { OrgSettings } from "@/lib/types";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient();
@@ -11,16 +12,18 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   if (!user) redirect("/login");
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("full_name, role")
-    .eq("id", user.id)
-    .single();
+  const [{ data: profile }, { data: settings }] = await Promise.all([
+    supabase.from("profiles").select("full_name, role").eq("id", user.id).single(),
+    supabase.from("org_settings").select("*").eq("id", true).single(),
+  ]);
 
   if (!profile || profile.role !== "admin") {
     await supabase.auth.signOut();
     redirect("/login");
   }
+
+  const org = settings as OrgSettings | null;
+  const orgName = org?.org_name || "Fund Admin";
 
   const navItems = [
     { href: "/", label: "Overview" },
@@ -28,15 +31,26 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     { href: "/members", label: "Members" },
     { href: "/org-balance", label: "Organization Balance" },
     { href: "/audit-log", label: "Audit Log" },
+    { href: "/settings", label: "Settings" },
   ];
 
   return (
     <div className="flex min-h-screen flex-col bg-neutral-50">
       <header className="border-b border-neutral-200 bg-white">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-          <div>
-            <h1 className="text-lg font-semibold text-neutral-900">Fund Admin</h1>
-            <p className="text-xs text-neutral-500">Signed in as {profile.full_name}</p>
+          <div className="flex items-center gap-3">
+            {org?.logo_url && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={org.logo_url}
+                alt={`${orgName} logo`}
+                className="h-9 w-9 rounded-md object-contain"
+              />
+            )}
+            <div>
+              <h1 className="text-lg font-semibold text-neutral-900">{orgName}</h1>
+              <p className="text-xs text-neutral-500">Signed in as {profile.full_name}</p>
+            </div>
           </div>
           <SignOutButton />
         </div>

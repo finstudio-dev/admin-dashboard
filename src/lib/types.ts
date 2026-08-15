@@ -58,3 +58,11 @@ export interface AuditLogEntry {
   created_at: string;
   profiles?: Profile;
 }
+
+export interface OrgSettings {
+  id: true;
+  org_name: string;
+  logo_url: string | null;
+  updated_by: string | null;
+  updated_at: string;
+}

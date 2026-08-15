@@ -61,13 +61,19 @@ export default function ReviewActions({
           {loadingReceipt ? "Loading..." : "View receipt photo →"}
         </button>
       )}
-      <input
-        type="text"
-        placeholder="Optional note (visible to member)"
-        value={note}
-        onChange={(e) => setNote(e.target.value)}
-        className="w-full rounded-md border border-neutral-300 px-2 py-1 text-xs"
-      />
+      <div>
+        <label htmlFor={`note-${depositId}`} className="mb-1 block text-xs font-medium text-neutral-500">
+          Note (optional, visible to member)
+        </label>
+        <input
+          id={`note-${depositId}`}
+          type="text"
+          placeholder="e.g. reason for rejection"
+          value={note}
+          onChange={(e) => setNote(e.target.value)}
+          className="w-full rounded-md border border-neutral-300 px-2 py-1.5 text-xs focus:border-neutral-500 focus:outline-none"
+        />
+      </div>
       <div className="flex gap-2">
         <button
           onClick={handleApprove}

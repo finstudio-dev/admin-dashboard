@@ -244,3 +244,37 @@ export async function signOut() {
   const supabase = await createClient();
   await supabase.auth.signOut();
 }
+
+// Updates the group's display name and/or logo shown in the dashboard
+// header and the sign-in page. The logo file itself is uploaded straight
+// from the browser to the "branding" storage bucket (see SettingsForm) —
+// this action just records the resulting public URL. RLS on org_settings
+// already restricts the update to admins, so there's nothing extra to
+// check here (unlike deleteMember, this uses the normal session client).
+export async function updateOrgSettings(input: { orgName: string; logoUrl?: string | null }) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("Not signed in");
+
+  const update: { org_name: string; updated_by: string; updated_at: string; logo_url?: string | null } = {
+    org_name: input.orgName,
+    updated_by: user.id,
+    updated_at: new Date().toISOString(),
+  };
+  if (input.logoUrl !== undefined) update.logo_url = input.logoUrl;
+
+  const { error } = await supabase.from("org_settings").update(update).eq("id", true);
+  if (error) throw new Error(error.message);
+
+  await supabase.rpc("log_audit", {
+    p_action: "update_org_settings",
+    p_entity_type: "org_settings",
+    p_entity_id: null,
+    p_details: { org_name: input.orgName },
+  });
+
+  revalidatePath("/", "layout");
+  revalidatePath("/login");
+}
