@@ -4,11 +4,15 @@ import { useState, useTransition } from "react";
 import { addBulkMemberBalanceEntry } from "@/app/actions";
 import type { DepositMethod, EntryType } from "@/lib/types";
 
+// org_transfer isn't offered here — it's only ever created by the Transfer
+// to Members flow, which sets it automatically.
+type SelectableEntryType = Exclude<EntryType, "org_transfer">;
+
 const fieldLabel = "block text-xs font-medium text-neutral-500 mb-1";
 const fieldInput =
   "w-full rounded-md border border-neutral-300 bg-white px-2.5 py-2 text-sm text-neutral-900 focus:border-neutral-500 focus:outline-none";
 
-const HELP_TEXT: Record<EntryType, string> = {
+const HELP_TEXT: Record<SelectableEntryType, string> = {
   deposit: "Adds this amount to every active member's balance — e.g. collecting the same monthly dues from everyone at once.",
   withdrawal: "Subtracts this amount from every active member's balance.",
   bonus: "Gives every active member this much extra credit — not a real deposit.",
@@ -16,7 +20,7 @@ const HELP_TEXT: Record<EntryType, string> = {
 };
 
 export default function BulkBalanceEntryForm({ activeMemberCount }: { activeMemberCount: number }) {
-  const [entryType, setEntryType] = useState<EntryType>("deposit");
+  const [entryType, setEntryType] = useState<SelectableEntryType>("deposit");
   const [direction, setDirection] = useState<"add" | "subtract">("add");
   const [amount, setAmount] = useState("");
   const [method, setMethod] = useState<DepositMethod>("cash");
@@ -75,7 +79,7 @@ export default function BulkBalanceEntryForm({ activeMemberCount }: { activeMemb
       <div>
         <label className={fieldLabel}>Type</label>
         <div className="flex flex-wrap gap-1 rounded-lg border border-neutral-200 bg-neutral-50 p-1 w-fit">
-          {(["deposit", "withdrawal", "bonus", "adjustment"] as EntryType[]).map((t) => (
+          {(["deposit", "withdrawal", "bonus", "adjustment"] as SelectableEntryType[]).map((t) => (
             <button
               key={t}
               type="button"

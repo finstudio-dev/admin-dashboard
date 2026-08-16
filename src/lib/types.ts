@@ -2,13 +2,14 @@ export type Role = "member" | "admin";
 export type MemberStatus = "pending" | "active" | "suspended" | "rejected";
 export type DepositMethod = "bkash" | "nagad" | "rocket" | "bank" | "cash" | "other";
 export type DepositStatus = "pending" | "approved" | "rejected";
-export type EntryType = "deposit" | "withdrawal" | "bonus" | "adjustment";
+export type EntryType = "deposit" | "withdrawal" | "bonus" | "adjustment" | "org_transfer";
 export type OrgCategory =
   | "late_fee"
   | "membership_fee"
   | "org_upgrade"
   | "expense"
   | "adjustment"
+  | "member_transfer"
   | "other";
 
 export interface Profile {

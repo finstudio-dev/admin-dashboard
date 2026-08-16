@@ -4,11 +4,15 @@ import { useState, useTransition } from "react";
 import { addMemberBalanceEntry } from "@/app/actions";
 import type { DepositMethod, EntryType } from "@/lib/types";
 
+// org_transfer isn't offered here — it's only ever created by the Transfer
+// to Members flow, which sets it automatically.
+type SelectableEntryType = Exclude<EntryType, "org_transfer">;
+
 const fieldLabel = "block text-xs font-medium text-neutral-500 mb-1";
 const fieldInput =
   "w-full rounded-md border border-neutral-300 bg-white px-2.5 py-2 text-sm text-neutral-900 focus:border-neutral-500 focus:outline-none";
 
-const HELP_TEXT: Record<EntryType, string> = {
+const HELP_TEXT: Record<SelectableEntryType, string> = {
   deposit: "Money the member put in — e.g. cash handed over in person. Added as already approved.",
   withdrawal: "Money paid out to this member. Reduces their balance.",
   bonus: "Extra credit for this member (e.g. interest, a prize) — not a real deposit. Increases their balance.",
@@ -16,7 +20,7 @@ const HELP_TEXT: Record<EntryType, string> = {
 };
 
 export default function AddMemberBalanceEntryForm({ memberId }: { memberId: string }) {
-  const [entryType, setEntryType] = useState<EntryType>("deposit");
+  const [entryType, setEntryType] = useState<SelectableEntryType>("deposit");
   const [direction, setDirection] = useState<"add" | "subtract">("add");
   const [amount, setAmount] = useState("");
   const [method, setMethod] = useState<DepositMethod>("cash");
@@ -63,7 +67,7 @@ export default function AddMemberBalanceEntryForm({ memberId }: { memberId: stri
           Type
         </label>
         <div className="flex flex-wrap gap-1 rounded-lg border border-neutral-200 bg-neutral-50 p-1 w-fit">
-          {(["deposit", "withdrawal", "bonus", "adjustment"] as EntryType[]).map((t) => (
+          {(["deposit", "withdrawal", "bonus", "adjustment"] as SelectableEntryType[]).map((t) => (
             <button
               key={t}
               type="button"

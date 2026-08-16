@@ -43,6 +43,7 @@ export const entryTypeLabels: Record<string, string> = {
   withdrawal: "Withdrawal",
   bonus: "Bonus",
   adjustment: "Adjustment",
+  org_transfer: "From Organization Fund",
 };
 
 export const categoryLabels: Record<string, string> = {
@@ -51,5 +52,6 @@ export const categoryLabels: Record<string, string> = {
   org_upgrade: "Organization Upgrade",
   expense: "Expense",
   adjustment: "Adjustment",
+  member_transfer: "Transfer to Members",
   other: "Other",
 };

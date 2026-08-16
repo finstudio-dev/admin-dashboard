@@ -269,6 +269,50 @@ export async function deleteOrgBalanceEntry(entryId: string) {
   revalidatePath("/");
 }
 
+// Splits a total amount evenly across the selected members and moves it
+// from the organization balance into each member's own balance in one
+// atomic operation (see transfer_org_funds_to_members() in schema.sql —
+// the actual inserts happen there, in a single transaction, so the org
+// deduction and the members' receipts can never end up out of sync).
+// Splitting isn't always exact to the paisa (e.g. ৳100 / 3 people), so any
+// leftover paisa from rounding down is handed to the first few members in
+// the list, one extra paisa each, until the whole total is accounted for —
+// the sum of what members receive always equals the total exactly.
+export async function transferOrgFundsToMembers(input: {
+  memberIds: string[];
+  totalAmount: number;
+  note?: string;
+}) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("Not signed in");
+
+  if (!input.memberIds.length) throw new Error("Select at least one member.");
+  if (!input.totalAmount || input.totalAmount <= 0) throw new Error("Enter a valid total amount.");
+
+  const totalCents = Math.round(input.totalAmount * 100);
+  const n = input.memberIds.length;
+  const baseCents = Math.floor(totalCents / n);
+  const remainder = totalCents - baseCents * n;
+  const amounts = input.memberIds.map((_, i) => (baseCents + (i < remainder ? 1 : 0)) / 100);
+
+  const { data, error } = await supabase.rpc("transfer_org_funds_to_members", {
+    p_member_ids: input.memberIds,
+    p_amounts: amounts,
+    p_note: input.note || null,
+  });
+  if (error) throw new Error(error.message);
+
+  revalidatePath("/org-balance");
+  revalidatePath("/members");
+  revalidatePath("/");
+
+  const row = Array.isArray(data) ? data[0] : data;
+  return { memberCount: row?.member_count ?? n, totalAmount: row?.total_amount ?? input.totalAmount };
+}
+
 export async function setMemberStatus(memberId: string, status: "active" | "suspended") {
   const supabase = await createClient();
   const { error } = await supabase.from("profiles").update({ status }).eq("id", memberId);
