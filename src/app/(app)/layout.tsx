@@ -1,7 +1,7 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import SignOutButton from "@/components/SignOutButton";
+import NavLink from "@/components/NavLink";
 import type { OrgSettings } from "@/lib/types";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
@@ -57,15 +57,9 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           </div>
           <SignOutButton />
         </div>
-        <nav className="mx-auto flex max-w-6xl gap-1 overflow-x-auto px-6 pb-2">
+        <nav className="mx-auto flex max-w-6xl gap-1 overflow-x-auto px-6">
           {navItems.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className="whitespace-nowrap rounded-md px-3 py-1.5 text-sm font-medium text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900"
-            >
-              {item.label}
-            </Link>
+            <NavLink key={item.href} href={item.href} label={item.label} />
           ))}
         </nav>
       </header>
